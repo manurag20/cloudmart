@@ -1,0 +1,11 @@
+# LLD 10.1 — dynamic inventory: asks Azure "which VMs exist right now with
+# these tags?" every run, instead of a hand-maintained list of IPs.
+plugin: azure_rm
+include_vm_resource_groups:
+  - rg-cm-dev-ops
+auth_source: auto
+conditional_groups:
+  ops_vms: "'ops' in (resource_group | lower)"
+keyed_groups:
+  - prefix: tag
+    key: tags

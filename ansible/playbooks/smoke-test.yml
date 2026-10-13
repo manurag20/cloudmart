@@ -1,0 +1,24 @@
+---
+# LLD 10.3 — post-deploy health check, run automatically by app-cd.yml
+# before shifting traffic to 100% (Implementation Guide Step 6)
+- hosts: localhost
+  gather_facts: false
+  vars:
+    aca_domain: "{{ lookup('env', 'ACA_DEFAULT_DOMAIN') }}"
+    services:
+      - { name: web-frontend,   url: "http://ca-web-frontend-dev.internal.{{ aca_domain }}/health/live" }
+      - { name: order-api,      url: "http://ca-order-api-dev.internal.{{ aca_domain }}/health/live" }
+      - { name: inventory-svc,  url: "http://ca-inventory-svc-dev.internal.{{ aca_domain }}/health/live" }
+  tasks:
+    - name: Check each HTTP service's health endpoint
+      uri:
+        url: "{{ item.url }}"
+        status_code: 200
+      loop: "{{ services }}"
+      register: health_results
+
+    - name: Fail the run if anything did not return 200
+      fail:
+        msg: "{{ item.item.name }} failed its health check"
+      when: item.status != 200
+      loop: "{{ health_results.results }}"

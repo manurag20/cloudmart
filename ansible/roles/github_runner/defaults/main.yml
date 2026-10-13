@@ -1,0 +1,4 @@
+github_runner_version: "2.321.0"
+github_org: "<your-github-org>"
+github_repo: "cloudmart"
+github_runner_token: "{{ lookup('env', 'GITHUB_RUNNER_TOKEN') }}"  # short-lived; generate via `gh api` before each run

@@ -1,0 +1,49 @@
+---
+# LLD 10.2 — common role: updates, non-root hardening, fail2ban, unattended upgrades
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+
+- name: Install baseline hardening packages
+  apt:
+    name:
+      - fail2ban
+      - unattended-upgrades
+      - ufw
+    state: present
+
+- name: Enable unattended-upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+- name: Ensure fail2ban is enabled and running
+  systemd:
+    name: fail2ban
+    enabled: true
+    state: started
+
+- name: Disable SSH root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify: restart sshd
+
+- name: Disable SSH password authentication (key-only, reached via Bastion)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify: restart sshd
+
+- name: Set timezone
+  timezone:
+    name: Asia/Kolkata

@@ -1,0 +1,40 @@
+---
+# LLD 10.2 — github_runner role: self-hosted Actions runner as a systemd service
+- name: Create runner directory
+  file:
+    path: /opt/actions-runner
+    state: directory
+    owner: "{{ common_admin_user }}"
+
+- name: Download the runner package
+  get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+    dest: /opt/actions-runner/runner.tar.gz
+
+- name: Extract the runner package
+  unarchive:
+    src: /opt/actions-runner/runner.tar.gz
+    dest: /opt/actions-runner
+    remote_src: true
+    creates: /opt/actions-runner/config.sh
+
+- name: Configure the runner (idempotent — skips if already configured)
+  shell: |
+    ./config.sh --url https://github.com/{{ github_org }}/{{ github_repo }} \
+                --token {{ github_runner_token }} \
+                --unattended --replace --name cloudmart-ops-vm
+  args:
+    chdir: /opt/actions-runner
+    creates: /opt/actions-runner/.runner
+  become_user: "{{ common_admin_user }}"
+
+- name: Install the runner as a systemd service
+  shell: ./svc.sh install {{ common_admin_user }}
+  args:
+    chdir: /opt/actions-runner
+    creates: /etc/systemd/system/actions.runner.*.service
+
+- name: Start and enable the runner service
+  shell: ./svc.sh start
+  args:
+    chdir: /opt/actions-runner

@@ -1,0 +1,9 @@
+variable "name"                { type = string }
+variable "location"            { type = string }
+variable "resource_group_name" { type = string }
+variable "storage_account_name" { type = string }
+variable "storage_account_access_key" { type = string }
+variable "servicebus_namespace" { type = string }
+variable "identity_id"          { type = string }
+variable "app_insights_connection_string" { type = string }
+variable "tags"                 { type = map(string) }

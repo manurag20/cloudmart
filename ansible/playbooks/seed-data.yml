@@ -1,0 +1,21 @@
+---
+# LLD 5.2 — loads the product/stock seed data into Azure SQL, run once
+# from the Ops VM (which has network line-of-sight to the private endpoint)
+- hosts: ops_vms
+  become: false
+  vars:
+    sql_server: "{{ lookup('env', 'SQL_SERVER_FQDN') }}"
+    sql_db: "sqldb-inventory-dev"
+  tasks:
+    - name: Ensure sqlcmd (go-sqlcmd) is installed
+      shell: |
+        curl -sSL https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-amd64.tar.bz2 \
+          | tar -xj -C /usr/local/bin sqlcmd
+      args:
+        creates: /usr/local/bin/sqlcmd
+      become: true
+
+    - name: Apply schema and seed data via sqlcmd (Entra token auth, no password)
+      shell: |
+        TOKEN=$(az account get-access-token --resource https://database.windows.net --query accessToken -o tsv)
+        sqlcmd -S {{ sql_server }} -d {{ sql_db }} -G -P "$TOKEN" -i /opt/cloudmart/sql/schema_and_seed.sql

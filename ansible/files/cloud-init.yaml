@@ -1,0 +1,24 @@
+#cloud-config
+# LLD 10.4 — bootstraps Ansible itself on first boot, then has it configure
+# the VM via ansible-pull. Solves the chicken-and-egg problem: the VM
+# doesn't exist yet for Ansible to reach over SSH, so cloud-init (which
+# Azure runs automatically on first boot) does the first configuration run.
+package_update: true
+packages:
+  - python3-pip
+  - git
+
+write_files:
+  - path: /etc/profile.d/cloudmart.sh
+    content: |
+      export ACA_DEFAULT_DOMAIN="<filled in after stack 60-platform applies>"
+
+runcmd:
+  - pip3 install --break-system-packages ansible
+  - git clone https://github.com/<your-github-org>/cloudmart.git /opt/cloudmart
+  - ansible-galaxy collection install -r /opt/cloudmart/ansible/requirements.yml
+  - >
+    ansible-pull -U https://github.com/<your-github-org>/cloudmart.git
+    -d /opt/cloudmart
+    -i ansible/inventory/azure_rm.yml
+    ansible/playbooks/site.yml

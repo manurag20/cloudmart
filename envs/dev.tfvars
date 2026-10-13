@@ -1,0 +1,15 @@
+environment       = "dev"
+location          = "centralindia"
+project           = "cloudmart"
+owner             = "anurag"
+cost_center       = "personal-lab"
+hub_address_space = ["10.10.0.0/22"]
+app_address_space  = ["10.10.4.0/22"]
+ops_address_space  = ["10.10.8.0/24"]
+firewall_sku_tier  = "Basic"
+bastion_sku        = "Developer"
+sql_min_vcore      = 0.5
+sql_max_vcore      = 1
+sql_auto_pause_delay_minutes = 60
+waf_mode           = "Detection"   # Phase 1 — flips to "Prevention" in Phase 2 Step 13
+kv_purge_protection = false         # Phase 1 — flips to true in Phase 2 Step 13

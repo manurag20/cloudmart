@@ -1,0 +1,13 @@
+---
+# LLD 10.2 — installs the Azure Monitor Agent and associates it with a
+# Data Collection Rule pointed at log-cm-dev-cin-01 (LLD 13.1)
+- name: Install the Azure Monitor Agent extension via az CLI
+  shell: >
+    az vm extension set
+    --resource-group rg-cm-dev-ops
+    --vm-name vm-ops-dev-cin-01
+    --name AzureMonitorLinuxAgent
+    --publisher Microsoft.Azure.Monitor
+    --enable-auto-upgrade true
+  delegate_to: localhost
+  run_once: true

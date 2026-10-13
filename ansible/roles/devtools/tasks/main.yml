@@ -1,0 +1,57 @@
+---
+# LLD 10.2 — devtools role: Docker, Azure CLI, Terraform (pinned), Trivy
+- name: Install prerequisite packages
+  apt:
+    name: [ca-certificates, curl, gnupg, apt-transport-https, lsb-release]
+    state: present
+
+- name: Install Docker (official convenience script)
+  shell: curl -fsSL https://get.docker.com | sh
+  args:
+    creates: /usr/bin/docker
+
+- name: Add admin user to the docker group
+  user:
+    name: "{{ common_admin_user }}"
+    groups: docker
+    append: true
+
+- name: Install Azure CLI
+  shell: curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+  args:
+    creates: /usr/bin/az
+
+- name: Add HashiCorp GPG key
+  get_url:
+    url: https://apt.releases.hashicorp.com/gpg
+    dest: /tmp/hashicorp.gpg
+
+- name: Dearmor HashiCorp key
+  shell: gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg /tmp/hashicorp.gpg
+  args:
+    creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+- name: Add HashiCorp apt repo
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+    state: present
+    filename: hashicorp
+
+- name: Install Terraform
+  apt:
+    name: "terraform={{ terraform_version }}-*"
+    state: present
+    update_cache: true
+
+- name: Install Trivy GPG key and repo
+  shell: |
+    wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | tee /usr/share/keyrings/trivy.gpg > /dev/null
+    echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | tee /etc/apt/sources.list.d/trivy.list
+  args:
+    creates: /usr/share/keyrings/trivy.gpg
+
+- name: Install Trivy
+  apt:
+    name: trivy
+    state: present
+    update_cache: true
